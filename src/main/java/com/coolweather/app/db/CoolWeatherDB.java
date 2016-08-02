@@ -47,7 +47,7 @@ public class CoolWeatherDB {
      * @param province 将Province实例存储到数据库
      */
     public void saveProvince(Province province){
-        if (province==null){
+        if (province!=null){
             ContentValues values=new ContentValues();
             values.put("province_name",province.getProvinceName());
             values.put("province_code",province.getProvinceCode());
@@ -58,7 +58,7 @@ public class CoolWeatherDB {
     /**
      * @return 从数据库读取全国的省份信息
      */
-    public List<Province> LoadProvinces(){
+    public List<Province> loadProvinces(){
         List<Province> list=new ArrayList<Province>();
         Cursor cursor=db.query("Province",null,null,null,null,null,null);
         if (cursor.moveToFirst()){
@@ -121,7 +121,7 @@ public class CoolWeatherDB {
             ContentValues values=new ContentValues();
             values.put("county_name",county.getCountyName());
             values.put("county_code",county.getCountyCode());
-            values.put("county_id",county.getCityId());
+            values.put("city_id",county.getCityId());
             db.insert("County",null,values);
         }
     }
