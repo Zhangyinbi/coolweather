@@ -1,16 +1,16 @@
 package com.coolweather.app.activity;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.coolweather.app.R;
 import com.coolweather.app.util.HttpCallbackListener;
@@ -20,7 +20,7 @@ import com.coolweather.app.util.Utility;
 /**
  * Created by Administrator on 2016/8/3 0003.
  */
-public class WeatherActivity extends Activity {
+public class WeatherActivity extends Activity implements View.OnClickListener {
     private TextView cityNameText;
     private TextView publishText;
     private TextView currentDateText;
@@ -28,6 +28,8 @@ public class WeatherActivity extends Activity {
     private TextView temp1Text;
     private TextView temp2Text;
     private LinearLayout weatherInfoLayout;
+    private Button switch_city;
+    private Button refresh_weather;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,42 +37,43 @@ public class WeatherActivity extends Activity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.weather_layout);
         initView();
-        String countyCode=getIntent().getStringExtra("county_code");
-        if(!TextUtils.isEmpty(countyCode)){
+        String countyCode = getIntent().getStringExtra("county_code");
+        if (!TextUtils.isEmpty(countyCode)) {
             publishText.setText("同步中。。。");
             weatherInfoLayout.setVisibility(View.INVISIBLE);
             cityNameText.setVisibility(View.INVISIBLE);
             queryWeatherCode(countyCode);
 
-        }else{
+        } else {
             showWeather();
         }
     }
 
     private void queryWeatherCode(String countyCode) {
-        String adress="http://www.weather.com.cn/data/list3/city"+countyCode+".xml";
-        queryFromServer(adress,"countyCode");
+        String adress = "http://www.weather.com.cn/data/list3/city" + countyCode + ".xml";
+        queryFromServer(adress, "countyCode");
     }
-    private void queryWeatherInfo(String weatherCode){
-        String adress="http://www.weather.com.cn/data/cityinfo/"+weatherCode+".html";
-        queryFromServer(adress,"weatherCode");
+
+    private void queryWeatherInfo(String weatherCode) {
+        String adress = "http://www.weather.com.cn/data/cityinfo/" + weatherCode + ".html";
+        queryFromServer(adress, "weatherCode");
     }
 
     private void queryFromServer(String adress, final String type) {
         HttpUtil.sendHttpRequest(adress, new HttpCallbackListener() {
             @Override
             public void onFinish(String response) {
-                if ("countyCode".equals(type)){
-                    if (!TextUtils.isEmpty(response)){
-                        String []array=response.split("\\|");
-                        if (array!=null&&array.length==2){
-                            String weatherCode=array[1];
+                if ("countyCode".equals(type)) {
+                    if (!TextUtils.isEmpty(response)) {
+                        String[] array = response.split("\\|");
+                        if (array != null && array.length == 2) {
+                            String weatherCode = array[1];
 //                            Toast.makeText(getApplicationContext(),"oooo",Toast.LENGTH_SHORT).show();
                             queryWeatherInfo(weatherCode);
                         }
                     }
-                }else if ("weatherCode".equals(type)){
-                    Utility.handleWeatherResponse(WeatherActivity.this,response);
+                } else if ("weatherCode".equals(type)) {
+                    Utility.handleWeatherResponse(WeatherActivity.this, response);
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -94,14 +97,14 @@ public class WeatherActivity extends Activity {
     }
 
     private void showWeather() {
-        SharedPreferences prefs= PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         weatherInfoLayout.setVisibility(View.VISIBLE);
-        cityNameText.setText(prefs.getString("city_name",""));
-        temp1Text.setText(prefs.getString("temp1",""));
-        temp2Text.setText(prefs.getString("temp2",""));
-        weatherDespText.setText(prefs.getString("weather_desp",""));
-        publishText.setText("今天"+prefs.getString("publish_time","")+"发布");
-        currentDateText.setText(prefs.getString("current_date",""));
+        cityNameText.setText(prefs.getString("city_name", ""));
+        temp1Text.setText(prefs.getString("temp1", ""));
+        temp2Text.setText(prefs.getString("temp2", ""));
+        weatherDespText.setText(prefs.getString("weather_desp", ""));
+        publishText.setText("今天" + prefs.getString("publish_time", "") + "发布");
+        currentDateText.setText(prefs.getString("current_date", ""));
         cityNameText.setVisibility(View.VISIBLE);
     }
 
@@ -113,8 +116,30 @@ public class WeatherActivity extends Activity {
         temp1Text = (TextView) findViewById(R.id.temp1);
         temp2Text = (TextView) findViewById(R.id.temp2);
         weatherInfoLayout = (LinearLayout) findViewById(R.id.weather_info_layout);
+        switch_city = (Button) findViewById(R.id.switch_city);
+        switch_city.setOnClickListener(this);
+        refresh_weather = (Button) findViewById(R.id.refresh_weather);
+        refresh_weather.setOnClickListener(this);
     }
 
 
-
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.switch_city:
+                Intent intent=new Intent(this,ChooseAreaActivity.class);
+                intent.putExtra("from_weather_activity",true);
+                startActivity(intent);
+                finish();
+                break;
+            case R.id.refresh_weather:
+                publishText.setText("同步中。。。");
+                SharedPreferences sp=PreferenceManager.getDefaultSharedPreferences(this);
+                String weatherCode=sp.getString("weather_code","");
+                if (!TextUtils.isEmpty(weatherCode)){
+                    queryWeatherInfo(weatherCode);
+                }
+                break;
+        }
+    }
 }
